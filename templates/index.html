@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block body_class %}home-page{% endblock %}
+
+{% block header %}
+<div class="home-hero-header">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SnapClass Logo">
+    <h1>SNAP<br/>CLASS</h1>
+    <p class="home-subtitle">Making Attendance faster using AI</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="portal-grid">
+    <!-- Student Portal Card -->
+    <div class="portal-card">
+        <h2>I'm Student</h2>
+        <img src="{{ url_for('static', filename='images/mascot-student.png') }}" alt="Student Mascot" class="portal-mascot">
+        <a href="/student{% if join_code %}?join-code={{ join_code }}{% endif %}" class="btn btn-primary btn-block">
+            Student Portal <span>↗</span>
+        </a>
+    </div>
+
+    <!-- Teacher Portal Card -->
+    <div class="portal-card">
+        <h2>I'm Teacher</h2>
+        <img src="{{ url_for('static', filename='images/mascot-prof.png') }}" alt="Teacher Mascot" class="portal-mascot">
+        <a href="/teacher" class="btn btn-primary btn-block">
+            Teacher Portal <span>↗</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinCode = urlParams.get('join-code');
+        if (joinCode) {
+            // Auto redirect to student portal with join code
+            window.location.href = `/student?join-code=${encodeURIComponent(joinCode)}`;
+        }
+    });
+</script>
+{% endblock %}

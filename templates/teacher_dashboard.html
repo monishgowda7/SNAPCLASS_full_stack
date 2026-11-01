@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}SnapClass - Teacher Dashboard{% endblock %}
+
+{% block content %}
+<!-- Dashboard Navigation Tabs -->
+<div class="nav-tabs mb-4">
+    <button type="button" class="nav-tab-btn teacher-nav-tab active" id="tabBtn_viewTakeAttendance" onclick="showDashboardView('viewTakeAttendance')">
+        📸 Take AI Attendance
+    </button>
+    <button type="button" class="nav-tab-btn teacher-nav-tab" id="tabBtn_viewManageSubjects" onclick="showDashboardView('viewManageSubjects')">
+        📚 Manage Subjects
+    </button>
+    <button type="button" class="nav-tab-btn teacher-nav-tab" id="tabBtn_viewAttendanceRecords" onclick="showDashboardView('viewAttendanceRecords')">
+        📊 Attendance Records
+    </button>
+</div>
+
+<!-- ================= VIEW 1: TAKE AI ATTENDANCE ================= -->
+<div id="viewTakeAttendance" class="teacher-view-pane">
+    <div class="card">
+        <h2 style="font-size: 1.8rem; margin-bottom: 1.25rem;">Take AI Attendance</h2>
+
+        {% if subjects and subjects|length > 0 %}
+        <div class="form-group mb-3">
+            <label class="form-label" for="attendanceSubjectSelect">Select Subject</label>
+            <div class="d-flex gap-2">
+                <select id="attendanceSubjectSelect" class="form-control" style="font-size: 1.05rem;">
+                    {% for sub in subjects %}
+                    <option value="{{ sub.subject_id }}">{{ sub.subject_name }} - {{ sub.subject_code }} (Sec: {{ sub.section }})</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="btn btn-primary" onclick="openAddPhotosModal()" style="min-width: 170px;">
+                    📷 Add Photos
+                </button>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div>
+            <div class="d-flex justify-between align-center mb-2">
+                <h3 style="font-size: 1.25rem;">Added Classroom Photos <span id="photoCountBadge" style="color: var(--secondary);"></span></h3>
+                <button type="button" class="btn btn-tertiary btn-sm" id="btnClearPhotos" onclick="clearAllClassroomPhotos()" disabled>
+                    🗑️ Clear all photos
+                </button>
+            </div>
+
+            <!-- Gallery grid -->
+            <div class="photo-gallery" id="classroomPhotoGallery">
+                <div class="text-muted" style="grid-column: 1 / -1; padding: 1.5rem 0; text-align: center;">
+                    No photos added yet. Click <b>Add Photos</b> above to capture from webcam or upload pictures of the classroom.
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-secondary btn-lg flex-1" id="btnRunFaceAnalysis" onclick="runFaceAnalysis()" disabled>
+                🤖 Run Face Analysis
+            </button>
+            <button type="button" class="btn btn-primary btn-lg flex-1" onclick="openVoiceAttendanceModal()">
+                🎙️ Use Voice Attendance
+            </button>
+        </div>
+
+        {% else %}
+        <div class="text-center" style="padding: 2.5rem 1rem;">
+            <p class="text-muted mb-3" style="font-size: 1.1rem;">You haven't created any subjects yet! Please create a subject to begin taking attendance.</p>
+            <button type="button" class="btn btn-primary" onclick="showDashboardView('viewManageSubjects'); openModal('createSubjectModal');">
+                Create Your First Subject
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ================= VIEW 2: MANAGE SUBJECTS ================= -->
+<div id="viewManageSubjects" class="teacher-view-pane" style="display: none;">
+    <div class="d-flex justify-between align-center mb-3">
+        <div>
+            <h2>Manage Subjects</h2>
+            <p class="text-muted">Create new courses and share enrollment QR codes with students</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary" onclick="openModal('createSubjectModal')">
+                + Create New Subject
+            </button>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    {% if subjects and subjects|length > 0 %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem;">
+        {% for sub in subjects %}
+        <div class="subject-card">
+            <h3 class="subject-card-title">{{ sub.subject_name }}</h3>
+            <p class="subject-card-sub">
+                Code: <span class="subject-code-tag">{{ sub.subject_code }}</span> | Section: <b>{{ sub.section }}</b>
+            </p>
+
+            <div class="subject-stats-row">
+                <div class="stat-pill">
+                    <span>🫂</span> <b>{{ sub.total_students or 0 }}</b> Students
+                </div>
+                <div class="stat-pill">
+                    <span>🕰️</span> <b>{{ sub.total_classes or 0 }}</b> Classes
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-primary btn-sm btn-block" onclick="openShareSubjectModal('{{ sub.subject_name }}', '{{ sub.subject_code }}')">
+                    🔗 Share Code: {{ sub.subject_name }}
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card text-center" style="padding: 3rem 1.5rem;">
+        <h3 class="text-muted mb-2">No subjects found</h3>
+        <p class="text-muted mb-3">Click below to create a new subject for your students.</p>
+        <button type="button" class="btn btn-primary" onclick="openModal('createSubjectModal')">Create New Subject</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ================= VIEW 3: ATTENDANCE RECORDS ================= -->
+<div id="viewAttendanceRecords" class="teacher-view-pane" style="display: none;">
+    <div class="mb-3">
+        <h2>Attendance Records</h2>
+        <p class="text-muted">Review attendance history across all your classes</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card" style="padding: 1.5rem;">
+        {% if records_summary and records_summary|length > 0 %}
+        <div class="data-table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Subject</th>
+                        <th>Code</th>
+                        <th>Attendance Stats</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in records_summary %}
+                    <tr>
+                        <td><strong>{{ rec.Time }}</strong></td>
+                        <td>{{ rec.Subject }}</td>
+                        <td><span class="subject-code-tag">{{ rec['Subject Code'] }}</span></td>
+                        <td>
+                            <span class="status-badge present">{{ rec['Attendance Stats'] }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted" style="font-size: 1.05rem;">No attendance records found yet. Run an attendance scan to record attendance logs.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- 1. Add Classroom Photos Modal -->
+<div id="addPhotosModal" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 620px;">
+        <div class="modal-header">
+            <h3>Add Classroom Photos</h3>
+            <button type="button" class="modal-close-btn" data-close-modal="addPhotosModal">✕</button>
+        </div>
+        <p class="text-muted mb-3">Add classroom photos to scan and detect student faces.</p>
+
+        <!-- Live Camera Snapshot -->
+        <div class="camera-container" style="max-height: 280px; margin-bottom: 1rem;">
+            <video id="modalClassroomCamera" class="camera-video" autoplay playsinline muted></video>
+        </div>
+
+        <div class="text-center mb-3">
+            <button type="button" class="btn btn-primary" onclick="captureClassroomPhoto()">
+                📸 Snap Photo from Camera
+            </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Or File Upload -->
+        <div class="form-group text-center">
+            <label class="form-label">Or choose image files from computer:</label>
+            <input type="file" multiple accept="image/*" class="form-control" style="max-width: 380px; margin: 0 auto;" onchange="handleClassroomPhotoUpload(this)">
+        </div>
+
+        <div class="d-flex justify-between mt-4">
+            <button type="button" class="btn btn-primary btn-block" data-close-modal="addPhotosModal">
+                Done
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Attendance Results Preview Modal -->
+<div id="attendanceResultModal" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 680px;">
+        <div class="modal-header">
+            <h3>Attendance Review</h3>
+            <button type="button" class="modal-close-btn" data-close-modal="attendanceResultModal">✕</button>
+        </div>
+        <p class="text-muted mb-3">Please review the detected student attendance before confirming.</p>
+
+        <div class="data-table-container mb-3" style="max-height: 340px; overflow-y: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Student ID</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="attendanceResultTableBody">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-between gap-2 mt-4">
+            <button type="button" class="btn btn-outline flex-1" data-close-modal="attendanceResultModal">Discard</button>
+            <button type="button" class="btn btn-primary flex-1" id="btnConfirmSaveAttendance" onclick="confirmAndSaveAttendance()">
+                Confirm & Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Voice Attendance Modal -->
+<div id="voiceAttendanceModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Voice Attendance</h3>
+            <button type="button" class="modal-close-btn" data-close-modal="voiceAttendanceModal">✕</button>
+        </div>
+        <p class="text-muted mb-3">Record audio of students saying "I am present". AI will identify the voices.</p>
+
+        <div class="audio-recorder-box">
+            <button type="button" class="record-btn-circle" id="btnRecordClassVoice" onclick="toggleVoiceRecording()">
+                🎤
+            </button>
+            <p id="classVoiceStatus" style="font-weight: 600; color: var(--dark); font-size: 0.95rem;">
+                Click mic to start recording classroom audio
+            </p>
+            <audio id="classVoicePreview" controls style="display: none; width: 100%; margin-top: 10px;"></audio>
+        </div>
+
+        <div class="text-center mb-3">
+            <span class="text-muted" style="font-size: 0.88rem;">Or upload classroom audio file (.wav, .mp3):</span>
+            <input type="file" id="classVoiceFileInput" accept="audio/*" class="form-control mt-1" style="max-width: 320px; margin: 0 auto;">
+        </div>
+
+        <div class="d-flex justify-between gap-2 mt-4">
+            <button type="button" class="btn btn-outline flex-1" data-close-modal="voiceAttendanceModal">Cancel</button>
+            <button type="button" class="btn btn-primary flex-1" id="btnAnalyzeClassVoice" onclick="runVoiceAnalysis()">
+                Analyze Audio
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Create New Subject Modal -->
+<div id="createSubjectModal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create New Subject</h3>
+            <button type="button" class="modal-close-btn" data-close-modal="createSubjectModal">✕</button>
+        </div>
+        <p class="text-muted mb-3">Enter the details of your new subject.</p>
+
+        <form onsubmit="createNewSubject(event)">
+            <div class="form-group">
+                <label class="form-label" for="newSubjectCode">Subject Code</label>
+                <input type="text" id="newSubjectCode" class="form-control" placeholder="E.g. CS101" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="newSubjectName">Subject Name</label>
+                <input type="text" id="newSubjectName" class="form-control" placeholder="E.g. Machine Learning & AI" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="newSubjectSection">Section</label>
+                <input type="text" id="newSubjectSection" class="form-control" placeholder="E.g. A" required>
+            </div>
+
+            <div class="d-flex justify-between gap-2 mt-4">
+                <button type="button" class="btn btn-outline flex-1" data-close-modal="createSubjectModal">Cancel</button>
+                <button type="submit" class="btn btn-primary flex-1" id="btnCreateSubjectSubmit">Create Subject Now</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 5. Share Subject QR Modal -->
+<div id="shareSubjectModal" class="modal-backdrop">
+    <div class="modal-content text-center">
+        <div class="modal-header">
+            <h3>Share Class Link</h3>
+            <button type="button" class="modal-close-btn" data-close-modal="shareSubjectModal">✕</button>
+        </div>
+        <p class="text-muted mb-2">Share this code or QR with students to auto-enroll.</p>
+
+        <h4 id="shareSubjectName" style="color: var(--primary); font-size: 1.3rem; margin-bottom: 0.25rem;"></h4>
+        <p style="margin-bottom: 1.25rem;">Subject Code: <span class="subject-code-tag" id="shareSubjectCode" style="font-size: 1.1rem;"></span></p>
+
+        <div style="background: white; padding: 12px; border-radius: 16px; display: inline-block; box-shadow: var(--shadow-sm); margin-bottom: 1.25rem;">
+            <img id="shareSubjectQR" src="" alt="Class QR Code" style="width: 180px; height: 180px; object-fit: contain; display: block;">
+        </div>
+
+        <div class="form-group">
+            <div class="d-flex gap-2">
+                <input type="text" id="shareSubjectLink" class="form-control" readonly style="font-size: 0.9rem;">
+                <button type="button" class="btn btn-secondary" onclick="copyShareLink()">Copy Link</button>
+            </div>
+        </div>
+
+        <p class="text-muted" style="font-size: 0.85rem;">Students can scan this QR code or click the link to join directly.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}

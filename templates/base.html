@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SnapClass - Making Attendance faster using AI{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+    <div class="container">
+        {% block header %}
+        <header class="top-header">
+            <a href="/" class="brand-badge">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SnapClass Logo">
+                <h2>SNAP<br/>CLASS</h2>
+            </a>
+
+            {% if session.get('user_role') %}
+            <div class="header-user-info">
+                <h3>Welcome, {{ session.get('student_data', {}).get('name') or session.get('teacher_data', {}).get('name', 'User') }}</h3>
+                <a href="/logout" class="btn btn-secondary btn-sm">Logout</a>
+            </div>
+            {% endif %}
+        </header>
+        {% endblock %}
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+
+        {% block footer %}
+        <footer class="app-footer">
+            <p>Created with ❤️ by <span class="author-name">Group 15</span></p>
+        </footer>
+        {% endblock %}
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

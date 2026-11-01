@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}SnapClass - Teacher Portal{% endblock %}
+
+{% block header %}
+<header class="top-header">
+    <a href="/" class="brand-badge">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SnapClass Logo">
+        <h2>SNAP<br/>CLASS</h2>
+    </a>
+    <a href="/" class="btn btn-secondary btn-sm">Go back to Home</a>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="auth-box">
+    <!-- Tab Toggle -->
+    <div class="nav-tabs">
+        <button type="button" class="nav-tab-btn active" id="tabTeacherLogin" onclick="switchTeacherTab('login')">
+            Teacher Login
+        </button>
+        <button type="button" class="nav-tab-btn" id="tabTeacherReg" onclick="switchTeacherTab('register')">
+            Register Account
+        </button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="teacherLoginForm">
+        <div class="auth-header">
+            <h2>Teacher Login</h2>
+            <p>Access your classes and attendance dashboard</p>
+        </div>
+
+        <form onsubmit="handleTeacherLogin(event)">
+            <div class="form-group">
+                <label class="form-label" for="teacherUsername">Username</label>
+                <input type="text" id="teacherUsername" class="form-control" placeholder="E.g. alberteinstein" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="teacherPassword">Password</label>
+                <input type="password" id="teacherPassword" class="form-control" placeholder="Enter your password" required>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnTeacherLogin">
+                    Login
+                </button>
+            </div>
+            
+            <div class="text-center mt-3">
+                <span class="text-muted" style="font-size: 0.95rem;">Don't have an account?</span>
+                <button type="button" class="btn btn-sm btn-outline ml-1" onclick="switchTeacherTab('register')">
+                    Register Instead
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Register Form -->
+    <div id="teacherRegisterForm" style="display: none;">
+        <div class="auth-header">
+            <h2>Register Teacher Profile</h2>
+            <p>Create a teacher account to manage classes and attendance</p>
+        </div>
+
+        <form onsubmit="handleTeacherRegister(event)">
+            <div class="form-group">
+                <label class="form-label" for="regTeacherUsername">Choose Username</label>
+                <input type="text" id="regTeacherUsername" class="form-control" placeholder="E.g. alberteinstein" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="regTeacherName">Full Name</label>
+                <input type="text" id="regTeacherName" class="form-control" placeholder="E.g. Albert Einstein" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="regTeacherPassword">Password</label>
+                <input type="password" id="regTeacherPassword" class="form-control" placeholder="Create a password" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="regTeacherConfirmPassword">Confirm Password</label>
+                <input type="password" id="regTeacherConfirmPassword" class="form-control" placeholder="Re-enter password" required>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnTeacherRegister">
+                    Register now
+                </button>
+            </div>
+
+            <div class="text-center mt-3">
+                <span class="text-muted" style="font-size: 0.95rem;">Already have an account?</span>
+                <button type="button" class="btn btn-sm btn-outline ml-1" onclick="switchTeacherTab('login')">
+                    Login Instead
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}

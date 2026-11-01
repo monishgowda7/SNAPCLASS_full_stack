@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}SnapClass - Student FaceID Login{% endblock %}
+
+{% block header %}
+<header class="top-header">
+    <a href="/" class="brand-badge">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SnapClass Logo">
+        <h2>SNAP<br/>CLASS</h2>
+    </a>
+    <a href="/" class="btn btn-secondary btn-sm">Go back to Home</a>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="auth-box">
+    <div class="auth-header">
+        <h2>Login using FaceID</h2>
+        <p>Position your face in the frame to verify your identity</p>
+    </div>
+
+    <!-- Live Webcam View -->
+    <div class="camera-container" id="cameraContainer">
+        <video id="studentCamera" class="camera-video" autoplay playsinline muted></video>
+        <div class="camera-overlay">
+            <div class="camera-face-frame"></div>
+            <div class="camera-scanning-line"></div>
+        </div>
+    </div>
+
+    <div class="text-center mb-3">
+        <button type="button" class="btn btn-primary btn-lg btn-block" id="btnScanFace" onclick="verifyFaceId()">
+            Scan FaceID
+        </button>
+    </div>
+
+    <!-- Alternative: Upload Photo -->
+    <div class="text-center mb-2" id="cameraUploadFallback">
+        <p class="text-muted mb-1" style="font-size: 0.9rem;">Or upload a photo instead:</p>
+        <input type="file" id="studentPhotoFile" accept="image/*" class="form-control" style="max-width: 340px; margin: 0 auto;">
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Student Registration Form (shown when face is not recognized or for new students) -->
+    <div id="studentRegForm" style="display: none;">
+        <div class="card" style="border: 2px solid var(--primary); background: #fdfdff;">
+            <div class="auth-header" style="margin-bottom: 1.25rem;">
+                <h2 style="font-size: 1.6rem;">Register new Profile</h2>
+                <p>We didn't recognize your face. Create a new student account below!</p>
+            </div>
+
+            <form onsubmit="registerStudentProfile(event)">
+                <div class="form-group">
+                    <label class="form-label" for="regStudentName">Full Name</label>
+                    <input type="text" id="regStudentName" class="form-control" placeholder="E.g. Monish Gowda" required>
+                </div>
+
+                <div class="form-group mt-3">
+                    <label class="form-label">Optional: Voice Enrollment</label>
+                    <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 0.75rem;">
+                        Enroll your voice for voice-only attendance in class.
+                    </p>
+
+                    <div class="audio-recorder-box">
+                        <button type="button" class="record-btn-circle" id="btnRecordAudio" onclick="toggleAudioRecording()" title="Click to Record">
+                            🎤
+                        </button>
+                        <p id="audioRecordStatus" style="font-size: 0.9rem; font-weight: 600; color: var(--dark);">
+                            Click mic to record: "I am present, My name is..."
+                        </p>
+                        <audio id="audioPreview" controls style="display: none; width: 100%; margin-top: 10px;"></audio>
+                    </div>
+
+                    <div class="text-center">
+                        <span class="text-muted" style="font-size: 0.85rem;">Or upload an audio file:</span>
+                        <input type="file" id="regAudioFile" accept="audio/*" class="form-control mt-1" style="max-width: 320px; margin: 0.5rem auto;">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="btnRegisterSubmit">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        initWebcam('studentCamera');
+    });
+
+    window.addEventListener('beforeunload', () => {
+        stopWebcam();
+    });
+</script>
+{% endblock %}
